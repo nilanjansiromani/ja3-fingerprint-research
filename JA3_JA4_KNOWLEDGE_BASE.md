@@ -1019,7 +1019,7 @@ The first HTTP/2 frame the client sends. Contains `id:value` pairs in send order
 Connection-level WINDOW_UPDATE increment sent after SETTINGS:
 - **Chrome**: `15663105`
 - **Firefox**: `12517377`
-- **Safari**: `10420275`
+- **Safari**: `10420275` (Safari 17 and earlier); Safari 18 uses `10485760`
 - **httpx/Python**: `0` (none sent) — immediate mismatch
 
 The value derives from: `INITIAL_WINDOW_SIZE - 65535 (default) + additional allocation`.
@@ -1037,16 +1037,16 @@ Firefox's phantom streams (IDs 3, 5, 7, 9, 11, 13) are a strong Firefox signatur
 
 The order of `:method`, `:authority`, `:scheme`, `:path` in the first HEADERS frame:
 - **Chrome**: `m,a,s,p`
-- **Firefox**: `m,a,s,p` (same as Chrome)
-- **Safari**: `:method`, `:path`, `:scheme`, `:authority` (different)
+- **Firefox**: `m,p,a,s` (differs from Chrome)
+- **Safari**: `:method`, `:scheme`, `:path`, `:authority` (`m,s,p,a`)
 
 ### Complete Akamai Fingerprint Examples
 
 | Client | Akamai String |
 |---|---|
 | Chrome | `1:65536;2:0;4:6291456;6:262144\|15663105\|0\|m,a,s,p` |
-| Firefox | `1:65536;2:0;4:131072;5:16384\|12517377\|0\|m,a,s,p` |
-| Safari | `2:0;3:100;4:2097152;5:16384;9:1\|10420275\|0\|:method,:path,:scheme,:authority` |
+| Firefox | `1:65536;2:0;4:131072;5:16384\|12517377\|0\|m,p,a,s` |
+| Safari | `2:0;3:100;4:2097152;5:16384;9:1\|10420275\|0\|m,s,p,a` |
 
 The Akamai string hashed with MD5 (sorted SETTINGS keys) produces a compact 32-char hash.
 
