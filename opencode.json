@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "craft-docs": {
+      "type": "remote",
+      "url": "https://mcp.craft.do/links/GJZBFnxPxIT/mcp",
+      "enabled": true
+    }
+  }
+}
