@@ -41,19 +41,63 @@ Client → TCP :9443 → parse ClientHello → compute JA4 → score signals →
 - **default**: Low confidence bot
 - **<= -10 + browser prefix**: Browser
 
-### Quick Start
+### Starting the Server
+
+**Prerequisites:** Node.js (no npm dependencies — pure built-in modules).
 
 ```bash
-node server.js          # Start server on :9443
-node test_fingerprints.mjs  # Run 7 real TLS clients
-node break_test.mjs         # Run bypass tests
+# Generate self-signed cert (one-time)
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj '/CN=localhost'
+
+# Start server on :9443
+node server.js
 ```
 
-Curl example:
+On startup, the server binds to port 9443 and listens for **both** raw TLS connections and HTTPS requests:
+
+- **Raw TLS (ClientHello capture):** Connect with any TLS client (curl, openssl, browser) — the server reads the ClientHello, computes JA4, runs the classifier, and returns a JSON verdict over TLS.
+- **HTTP endpoint:** `https://127.0.0.1:9443/check` returns the last seen fingerprint.
+
+### Testing the Server
+
 ```bash
-curl -k https://127.0.0.1:9443/check  # From this machine
-# Or:
-openssl s_client -connect 127.0.0.1:9443  # Raw TLS (paste GET /check HTTP/1.1\r\n\r\n)
+# From the same machine (cURL — gets classified as a bot)
+curl -k https://127.0.0.1:9443/check
+
+# Raw TLS via openssl (also gets classified)
+openssl s_client -connect 127.0.0.1:9443
+# Once connected, paste: GET /check HTTP/1.1\nHost: 127.0.0.1:9443\n\n
+
+# Run full test suite (7 real TLS clients)
+node test_fingerprints.mjs
+
+# Run bypass tests (crafted ClientHelos)
+node break_test.mjs
+```
+
+### API Response
+
+The server returns JSON with JA4 fingerprint, match reasons, and bot verdict:
+
+```json
+{
+  "ja4": "t13d1003h2_9e90ac0cd01f_ae2d65e3b6fe",
+  "ja4_b": "9e90ac0cd01f",
+  "ja4_c": "ae2d65e3b6fe",
+  "possible_bot": true,
+  "confidence": "high",
+  "from_browser": false,
+  "match": "exts_lt8;no_grease;non_browser_prefix",
+  "cipher_count": 10,
+  "extension_count": 3,
+  "sni_present": false,
+  "alpn": "h2",
+  "tls_version": "771",
+  "grease_count": 0,
+  "grease_present": false,
+  "sigalg_count": 4,
+  "group_count": 2
+}
 ```
 
 ### Test Results
