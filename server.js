@@ -219,16 +219,17 @@ function classify(prefix, b, c, cipherCount, extCount, alpn, hadSNI, sigalgCount
   // GREASE presence (browsers always send GREASE; bots rarely do)
   if (!hadGrease) { score += 8; reasons.push('no_grease'); }
 
-  // JA4_a prefix heuristic
+  // JA4_a prefix heuristic (soft signal only — does NOT override other signals)
   const isBrowserPrefix = prefix.startsWith('t13d15') || prefix.startsWith('t13d17') || prefix.startsWith('t13d20');
   const isTLS13Prefix = prefix.startsWith('t13d') || prefix.startsWith('t13i');
-  if (isBrowserPrefix) { score -= 10; }
-  else if (isTLS13Prefix) { score += 5; }
+  if (isBrowserPrefix) { score -= 3; }
+  else if (isTLS13Prefix) { score += 3; reasons.push('non_browser_prefix'); }
   if (prefix.startsWith('t12')) { score += 10; reasons.push('tls12_prefix'); }
 
-  // Decision
-  if (score >= 20) return { fromBrowser: false, possibleBot: true, match: reasons.join(';'), confidence: score >= 30 ? 'high' : 'medium' };
-  if (score <= 0) return { fromBrowser: true, possibleBot: false, match: 'weighted_low_score', confidence: 'medium' };
+  // Decision: conservative — unless KNOWN says browser, default to bot
+  if (score >= 25) return { fromBrowser: false, possibleBot: true, match: reasons.join(';'), confidence: 'high' };
+  if (score >= 15) return { fromBrowser: false, possibleBot: true, match: reasons.join(';'), confidence: 'medium' };
+  if (score <= -10 && isBrowserPrefix) return { fromBrowser: true, possibleBot: false, match: 'weighted_low_score', confidence: 'medium' };
   return { fromBrowser: false, possibleBot: true, match: reasons.join(';') || 'unrecognized', confidence: 'low' };
 }
 
